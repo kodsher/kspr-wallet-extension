@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 type ContactsProps = {
   isLight: boolean;
@@ -6,18 +6,6 @@ type ContactsProps = {
   onContactInfo: () => void;
   onNewContact: () => void;
 };
-
-const contacts = [
-  { name: 'Alice', address: 'kaspatest:qr63dcf5mfexwg9kcx77gr6pgcy099m3963geaa4ed7pva2u9vcsk833qkcl' },
-  { name: 'Bob', address: 'kaspatest:qr63dcf5mfexwg9kcx77gr6pgcy099m396333aa4ed7pva2u9vcsk8583qkcl' },
-  { name: 'Charlie', address: 'kaspatest:qr63dcf5mfexwg9kcx77gr6pgcy099m3963geaa4ed7pva2u9vcsk8583qkcl' },
-];
-
-const recentlyUsed = [
-  { address: 'kaspatest:qr63dcf5mfexwg9kcx77gr6pgcy099m3963geaa4ed7pva2u9vcsk8583qkcl' },
-  { address: 'kaspatest:qr63dcf5mfexwg9kcx77gr6pgcy099m3963geaa4ed7pva2u9vcsk8583qkcl' },
-  { address: 'kaspatest:qr63dcf5mfexwg9kcx77gr6pgcy099m3963geaa4ed7pva2u9vcsk8583qkcl' },
-];
 
 const reduceKaspaAddress = (address: string): string => {
   if (address.length > 20) {
@@ -33,6 +21,32 @@ const getRandomTurquoiseColor = () => {
 };
 
 const Contacts: React.FC<ContactsProps> = ({ isLight, onBack, onContactInfo, onNewContact }) => {
+  // State to hold the fetched contacts from the backend
+  const [contacts, setContacts] = useState([]);
+  const [loading, setLoading] = useState(true); // To show a loading state
+
+  // Fetch the contacts from the backend
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/contacts'); // Adjust the URL as needed
+        const data = await response.json();
+        setContacts(data); // Set the fetched contacts into state
+        setLoading(false); // Turn off the loading state once contacts are fetched
+      } catch (error) {
+        console.error('Error fetching contacts:', error);
+        setLoading(false); // Ensure loading state is turned off even on error
+      }
+    };
+
+    fetchContacts();
+  }, []); // Empty dependency array ensures this runs only once on component mount
+
+  // Show a loading state while fetching data
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="flex flex-col items-center justify-start w-full h-full p-4 pt-6 overflow-y-auto">
       <div className="w-full flex items-center mb-4">
@@ -46,7 +60,7 @@ const Contacts: React.FC<ContactsProps> = ({ isLight, onBack, onContactInfo, onN
 
       {/* Contacts Section */}
       <div className="w-full space-y-4">
-        {contacts.map((contact, index) => (
+        {contacts.map((contact: any, index: number) => (
           <div
             key={index}
             className={`flex justify-between items-center cursor-pointer p-3 rounded-lg ${
@@ -73,28 +87,6 @@ const Contacts: React.FC<ContactsProps> = ({ isLight, onBack, onContactInfo, onN
                 </p>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Recently Used Section */}
-      <div className="w-full mt-8 space-y-4">
-        <h2 className={`text-lg font-bold mb-4 ${isLight ? 'text-gray-900' : 'text-gray-200'}`}>Recently Used</h2>
-        {recentlyUsed.map((item, index) => (
-          <div
-            key={index}
-            className={`flex justify-between items-center p-4 rounded-lg ${isLight ? 'bg-gray-100' : 'bg-gray-800'}`}>
-            {/* Wallet Address */}
-            <p className={`text-sm ${isLight ? 'text-gray-900' : 'text-gray-200'}`}>
-              {reduceKaspaAddress(item.address)}
-            </p>
-
-            {/* Add Button */}
-            <button
-              className="rounded-full h-8 w-8 bg-[#70C7BA] flex items-center justify-center hover:scale-105 transition duration-300 ease-in-out"
-              onClick={onNewContact}>
-              <span className="text-white text-base font-bold">+</span>
-            </button>
           </div>
         ))}
       </div>
